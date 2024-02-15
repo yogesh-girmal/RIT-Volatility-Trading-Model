@@ -2,36 +2,10 @@ import signal
 import asyncio
 import aiohttp
 import pandas as pd
+from utils import *
 
 API_KEY = {'X-API-Key': 'SLMQ8O0P'}
 shutdown = False
-
-# code that gets the current tick
-async def get_tick(session):
-    async with session.get('http://localhost:9999/v1/case') as resp:
-        if resp.status == 200:
-            case = await resp.json()
-            return case['tick']
-        
-async def get_period(session):
-    async with session.get('http://localhost:9999/v1/case') as resp:
-        if resp.status == 200:
-            case = await resp.json()
-            return case['period']
-
-async def get_status(session):
-    async with session.get('http://localhost:9999/v1/case') as resp:
-        if resp.status == 200:
-            case = await resp.json()
-            return case['status']
-
-# code that gets the securities via json
-async def get_s(session):
-    async with session.get('http://localhost:9999/v1/securities') as price_act:
-        if price_act.status == 200:
-            prices = await price_act.json()
-            return [price['last'] for price in prices], [price['ticker'] for price in prices]
-
 
 async def main():
     try:
@@ -41,13 +15,14 @@ async def main():
 
             while tick == 0:
                 await asyncio.sleep(0.5)
+                  
                 tick = await get_tick(session)
                 print("wating fot tick to start, current tick is ", tick)
 
-            values = tick if tick > 1 else 1
+            values = tick
             securities_count = 41  # Number of securities
             data = [[] for _ in range(securities_count)]
-            _total_tick_count = 0
+            _total_tick_count = 1
             tick_count = values
             sub_heats = 1 #default
 
@@ -57,7 +32,6 @@ async def main():
             status= await get_status(session)
 
             while tick not in {values} or period not in {sub_heats} and status not in {"ACTIVE"}:
-                await asyncio.sleep(0.5)
                 tick = await get_tick(session)
                 period = await get_period(session)
                 status= await get_status(session)
@@ -76,6 +50,7 @@ async def main():
                     print(f"total_tick_count is {_total_tick_count}")
                     tick_count += 1
                     _total_tick_count += 1
+                    print(f"changing total_tick_count to {_total_tick_count}")
 
                     if tick == 300 and sub_heats == 1:
                         tick_count = 1
@@ -105,11 +80,6 @@ async def main():
     except Exception as e:
         print ("exception is ", e)
         raise 
-
-def signal_handler(signum, frame):
-    global shutdown
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    shutdown = True
 
 
 if __name__ == '__main__':
