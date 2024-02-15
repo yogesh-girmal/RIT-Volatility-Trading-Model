@@ -37,14 +37,7 @@ async def main():
     try:
         async with aiohttp.ClientSession(headers=API_KEY) as session:
             pd.set_option('chained_assignment', None)
-            tick = await get_tick(session)
-
-            while tick == 0:
-                await asyncio.sleep(0.5)
-                tick = await get_tick(session)
-                print("wating fot tick to start, current tick is ", tick)
-
-            values = tick if tick > 1 else 1
+            values = 200
             securities_count = 41  # Number of securities
             data = [[] for _ in range(securities_count)]
             _total_tick_count = 0
